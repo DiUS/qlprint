@@ -181,7 +181,7 @@ bool ql_print_raster_image(ql_ctx_t ctx, const ql_status_t *status, const ql_ras
   if (status->model_code == 'P' || status->model_code == '4')
     dn = 162; // 1296 pixels
 
-  if (img->width > dn * 8)
+  if (img->height > dn * 8)
     return false; // image too wide for printer
 
   char print_info[] = { ESC, 'i', 'z',
