@@ -52,14 +52,19 @@ ql_raster_image_t *loadpng(const char *path)
 
   png_read_info(png_ptr, info_ptr);
 
-  png_set_strip_alpha(png_ptr);
-  png_set_rgb_to_gray_fixed(png_ptr, 1, -1, -1); // force into grayscale
-  png_set_expand_gray_1_2_4_to_8(png_ptr); // get us a known output format
+  png_uint_32 width, height;
+  int bit_depth, color_type;
+  png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth,
+    &color_type, NULL, NULL, NULL);
+
+  if (color_type & PNG_COLOR_MASK_ALPHA)
+    png_set_strip_alpha(png_ptr);
+  if (color_type & (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_PALETTE))
+    png_set_rgb_to_gray_fixed(png_ptr, 1, -1, -1); // force into grayscale
+  if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+    png_set_expand_gray_1_2_4_to_8(png_ptr); // get us a known output format
 
   png_read_update_info(png_ptr, info_ptr);
-
-  png_uint_32 width = png_get_image_width(png_ptr, info_ptr);
-  png_uint_32 height = png_get_image_height(png_ptr, info_ptr);
 
   png_bytepp row_ptrs = calloc(height, sizeof(png_bytep));
   if (!row_ptrs)
