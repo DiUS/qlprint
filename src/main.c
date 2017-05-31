@@ -28,7 +28,7 @@ void syntax(void)
   fprintf(stderr,
 "Syntax:\n"
 "  qlprint [-p lp] -i\n"
-"          [-p lp] [-m margin] [-a] [-C|-D] [-W width] [-L length] [-Q] [-n num] [-t threshold] png...\n"
+"          [-p lp] [-m margin] [-a] [-C|-D] [-W width] [-L length] [-Q] [-n num] [-t threshold] [-x timeout] png...\n"
 "Where:\n"
 "  -p lp         Printer port (default /dev/usb/lp0)\n"
 "  -i            Print status information only, then exit\n"
@@ -41,6 +41,7 @@ void syntax(void)
 "  -Q            Prioritise quality of speed\n"
 "  -n num        Print num copies\n"
 "  -t threshold  Threshold for black-vs-white (default 128, i.e. 0-127=black)\n"
+"  -x timeout    Time to wait for successful print, in seconds (default 5)\n"
 "  png...        One or more png files to print\n"
 "\n");
 
@@ -57,9 +58,10 @@ int main (int argc, char *argv[])
     .threshold = 0x80,
     .flags = 0
   };
-  int opt;
   const char *printer = "/dev/usb/lp0";
-  while ((opt = getopt(argc, argv, "ip:m:an:CDW:L:Q")) != -1)
+  unsigned timeout = 5;
+  int opt;
+  while ((opt = getopt(argc, argv, "ip:m:an:CDW:L:Qx:")) != -1)
   {
     switch(opt)
     {
@@ -77,6 +79,7 @@ int main (int argc, char *argv[])
       case 'L': cfg.media_length = atoi(optarg);
                 cfg.flags |= QL_PRINT_CFG_MEDIA_LENGTH; break;
       case 'Q': cfg.flags |= QL_PRINT_CFG_QUALITY_PRIO; break;
+      case 'x': timeout = atoi(optarg); break;
       default: syntax();
     }
   }
@@ -171,7 +174,7 @@ for(int i = 0; i < img->height; ++i)
           argv[i], img->width, img->height);
         return EXIT_FAILURE;
       }
-      alarm(5);
+      alarm(timeout);
       do {
         if (!ql_read_status(ctx, &status))
         {
